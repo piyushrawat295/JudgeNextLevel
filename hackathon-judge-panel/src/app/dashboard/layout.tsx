@@ -1,23 +1,26 @@
-// app/dashboard/layout.tsx
-import { auth } from '@clerk/nextjs/server';
-import {UserButton} from '@clerk/nextjs';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Trophy, Users, BarChart3, Upload } from 'lucide-react';
+import { auth } from "@clerk/nextjs/server";
+import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Trophy, Users, BarChart3, Upload } from "lucide-react";
+import { Toaster } from "sonner"; // ✅ Import Sonner Toaster
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-const { userId } = await auth();
+  const { userId } = await auth();
 
   if (!userId) {
-    redirect('/');
+    redirect("/");
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* ✅ Global Sonner Toasts */}
+      <Toaster richColors position="top-right" />
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -76,14 +79,22 @@ const { userId } = await auth();
                   Import Data
                 </Link>
               </li>
+              {/* ✅ New Teams Link */}
+              <li>
+                <Link
+                  href="/dashboard/teams"
+                  className="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"
+                >
+                  <Users className="mr-3 h-5 w-5" />
+                  Manage Teams
+                </Link>
+              </li>
             </ul>
           </div>
         </nav>
 
         {/* Main content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );

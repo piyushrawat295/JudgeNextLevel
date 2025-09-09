@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { teams, judges } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 interface ImportTeamData {
   name: string;
@@ -18,7 +18,6 @@ interface TeamData {
   judgeId: number;
 }
 
-// Skeleton team
 const skeletonTeam: TeamData = {
   id: 0,
   name: "Team Name",
@@ -27,7 +26,6 @@ const skeletonTeam: TeamData = {
   judgeId: 0,
 };
 
-// Helper to ensure plain objects
 function plainTeam(team: any): TeamData {
   return {
     id: team?.id ?? 0,
@@ -73,9 +71,21 @@ export async function POST(req: NextRequest) {
     }
 
     const insertedTeams: TeamData[] = [];
+
     for (const teamInfo of teamData) {
       if (!teamInfo.name) continue;
 
+      // Check if team already exists for the same judge
+      const existingTeam = await db.query.teams.findFirst({
+        where: and(eq(teams.name, teamInfo.name), eq(teams.judgeId, judge.id)),
+      });
+
+      if (existingTeam) {
+        console.log(`Skipping duplicate team: ${teamInfo.name}`);
+        continue; // Skip duplicate team
+      }
+
+      // Insert only unique team
       const [insertedTeam] = await db.insert(teams).values({
         name: teamInfo.name,
         description: teamInfo.description || "",
@@ -88,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully imported ${insertedTeams.length} teams`,
+      message: `Successfully imported ${insertedTeams.length} unique teams`,
       teams: insertedTeams.length > 0 ? insertedTeams : [skeletonTeam],
     });
   } catch (error) {

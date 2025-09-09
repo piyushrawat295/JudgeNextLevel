@@ -132,7 +132,7 @@ export default async function ResultsPage() {
 
                 return (
                   <div
-                    key={team.id}
+                    key={`${team.id}-${index}`}
                     className={`border rounded-lg p-6 ${isScored ? 'bg-white' : 'bg-gray-50 opacity-60'}`}
                   >
                     <div className="flex items-start justify-between">
