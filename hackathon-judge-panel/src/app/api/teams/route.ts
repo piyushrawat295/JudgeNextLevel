@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { teams, scores } from "@/lib/db/schema";
-import { inArray, eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 
-// ✅ GET: Fetch all teams with hasScores flag
+// ✅ GET: Fetch all teams with global hasScores flag
 export async function GET() {
   try {
+    // Fetch all teams
     const allTeams = await db.select().from(teams);
 
-    // Get all team IDs that have scores
+    // Fetch all team IDs that have at least one score (from any judge)
     const scored = await db.select({ teamId: scores.teamId })
       .from(scores);
 
     const scoredTeamIds = scored.map((s) => s.teamId);
 
+    // Mark each team whether it has scores globally
     const formattedTeams = allTeams.map((t) => ({
       ...t,
       hasScores: scoredTeamIds.includes(t.id),
@@ -34,7 +36,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "No teams selected for deletion" }, { status: 400 });
     }
 
-    // Fetch scored team IDs
+    // Fetch all scored team IDs
     const scored = await db.select({ teamId: scores.teamId })
       .from(scores)
       .where(inArray(scores.teamId, teamIds));
